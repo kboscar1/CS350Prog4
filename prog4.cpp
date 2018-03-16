@@ -13,9 +13,58 @@ float fifo(int cache_size, int * pages);
 float random(int cache_size, int * pages);
 float lru(int cache_size, int * pages);
 float clock(int cache_size, int * pages);
+float optimal(int cache_size, int * pages);
 
-int main(){
-  cout << fifo(10000, no_locality()) << endl;
+int main(int argc, char ** argv){
+  if(argc != 7){
+    cout << "Usage: ./prog4swap [-m size-of-memory] [-r replacement-policy] [-w workload]" << ndl;
+    exit(1);
+  }
+
+  int cache_size = atoi(argv[2]);
+  string replacement_policy = argv[4];
+  string workload = argv[6];
+  
+  if(replacement_policy == "OPT" && workload  == "No-locality"){
+    optimal(cache_size, no_locality());
+  } else if(replacement_policy == "OPT" && workload  == "80-20"){
+    optimal(cache_size, eighty_twenty());
+  } else if (replacement_policy == "OPT" && workload  == "Looping"){
+    optimal(cache_size, looping());
+  }
+
+  if(replacement_policy == "LRU" && workload  == "No-locality"){
+    lru(cache_size, no_locality());
+  } else if(replacement_policy == "LRU" && workload  == "80-20"){
+    lru(cache_size, eighty_twenty());
+  } else if (replacement_policy == "LRU" && workload  == "Looping"){
+    lru(cache_size, looping());
+  }
+
+  if(replacement_policy == "FIFO" && workload  == "No-locality"){
+    fifo(cache_size, no_locality());
+  } else if(replacement_policy == "FIFO" && workload  == "80-20"){
+    fifo(cache_size, eighty_twenty());
+  } else if (replacement_policy == "FIFO" && workload  == "Looping"){
+    fifo(cache_size, looping());
+  }
+
+  if(replacement_policy == "Rand" && workload  == "No-locality"){
+    random(cache_size, no_locality());
+  } else if(replacement_policy == "Rand" && workload  == "80-20"){
+    random(cache_size, eighty_twenty());
+  } else if (replacement_policy == "Rand" && workload  == "Looping"){
+    random(cache_size, looping());
+  }
+  
+  if(replacement_policy == "Clock" && workload  == "No-locality"){
+    clock(cache_size, no_locality());
+  } else if(replacement_policy == "Clock" && workload  == "80-20"){
+    clock(cache_size, eighty_twenty());
+  } else if (replacement_policy == "Clock" && workload  == "Looping"){
+    clock(cache_size, looping());
+  }
+  
   
   return 0;
 }
