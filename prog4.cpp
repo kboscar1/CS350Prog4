@@ -236,7 +236,7 @@ float clock(int cache_size, int * pages){
 
   return (hits/10000.0) * 100;
 }
-/*
+
 float optimal(int cache_size, int * pages){
   if(cache_size == 0){
     return 0;
@@ -245,9 +245,10 @@ float optimal(int cache_size, int * pages){
   int i, j;
   int page;
   float hits = 0.0;
-  int[] cache = new int[cache_size];
+  int* cache = new int[cache_size];
   bool found;
-
+  int before_full = 0;
+  list<int> list;
 
   for(i = 0; i < cache_size; i++){
     cache[i] = 0;
@@ -258,7 +259,7 @@ float optimal(int cache_size, int * pages){
     page = pages[i];
 
     for(j = 0; j < cache_size; j++){
-      if(page == cache[]){
+      if(page == cache[j]){
 	hits++;
 	found = true;
 	break;
@@ -266,6 +267,34 @@ float optimal(int cache_size, int * pages){
     }
 
     if(!found){
-      
+      if(before_full < cache_size){ // Before the cache is full we can just add pages to it 
+	cache[before_full] = page;
+	before_full++;
+      } else {
+	list.clear();
+	// Want to look for page furthest in future
+	for(j = 0; j < cache_size; j++){	  
+	    list.push_back(cache[j]); // Add all the pages in the cache to a list	    
+	}
+	
+	for(j = i + 1; j < 10000; j++){ // Go through the rest of the reference stream
+	  if(list.size() > 1){
+	    list.remove(pages[j]); // Remove pages until there is only the furthest used one left
+	  } else {
+	    break;
+	  }
+	}
 
-*/
+	for(j = 0; j < cache_size; j++){
+	  if(cache[j] == list.front()){
+	    cache[j] = page;  // Find that final page in the cache and "evict" it
+	    break;
+	  }
+	}
+      }
+    }
+  }
+
+  return (hits/10000.0) * 100;
+  
+}
