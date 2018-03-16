@@ -1,0 +1,271 @@
+#include <algorithm>
+#include <list>
+#include <stdio.h>
+#include <stdlib.h>
+#include <iostream>
+
+using namespace std;
+
+int * no_locality();
+int * eighty_twenty();
+int * looping();
+float fifo(int cache_size, int * pages);
+float random(int cache_size, int * pages);
+float lru(int cache_size, int * pages);
+float clock(int cache_size, int * pages);
+
+int main(){
+  cout << fifo(10000, no_locality()) << endl;
+  
+  return 0;
+}
+
+int * no_locality(){
+  int i;
+  int *pages = new int[10000];
+
+  for(i = 0; i < 10000; i++){
+    pages[i] = rand()%(100) + 1;
+  }
+  /*
+  for(i = 0; i< 10000; i++){
+    cout << pages[i] << " " << endl;
+  }
+  */
+  
+  return pages;
+}
+
+int * eighty_twenty(){
+  int i, num;
+  int *pages = new int[10000];
+  
+  for(i = 0; i < 10000; i++){
+    num = rand()%100 + 1;
+
+    if(num <= 80){
+      pages[i] = rand()%20 + 1;
+    } else {
+      pages[i] = rand()%80 + 1;
+    }
+  }
+
+  /*  for(i = 0; i< 10000; i++){
+    cout << pages[i] << " " << endl;
+  }
+  */
+  return pages;
+}
+
+int * looping(){
+  int i, num = 0;
+  int *pages = new int[10000];
+
+  for(i = 0; i < 10000; i++){
+    if(num > 49){
+      num = 0;
+    }
+    
+    pages[i] = num;
+    num++;
+  }
+  
+  return pages;
+}
+
+float fifo(int cache_size, int * pages){
+  if(cache_size == 0){
+    return 0.0;
+  }
+
+  int * cache = new int[10000];
+  int i, j;
+  int page;
+  float hits = 0.0;
+  bool found;
+  int cache_index = 0;
+  
+  for(i = 0; i < cache_size; i++){
+    cache[i] = 0;
+  }
+
+  for(i = 0; i < 10000; i++){
+    page = pages[i];
+    found = false;
+
+    for(j = 0; j < cache_size; j++){
+      if(page == cache[j]){
+	found = true;
+	hits++;
+	break;
+      }
+    }
+
+    if(!found){
+      cache[cache_index] = page;
+      cache_index++;
+    }
+
+    if(cache_index == cache_size){
+      cache_index = 0;
+    }    
+  }
+  return (hits/(float)10000.0) * 100;
+}
+
+float random(int cache_size, int * pages){
+  if(cache_size == 0){
+    return 0.0;
+  }
+
+  int i, j;
+  int page;
+  float hits = 0.0;
+  int * cache = new int[cache_size];
+  bool found;
+  
+  for(i = 0; i < cache_size; i++){
+    cache[i] = 0;
+  }
+
+  for(i = 0; i < 10000; i++){
+    found = false;
+    page = pages[i];
+
+    for(j = 0; j < cache_size; j++){
+      if(page == cache[j]){
+	found = true;
+	hits++;
+	break;
+      }
+
+      if(!found){
+	cache[rand()%cache_size] = page;
+      }
+    }
+
+    return (hits/10000.0) * 100;
+  }
+}
+
+float lru(int cache_size, int * pages){
+  if(cache_size == 0){
+    return 0;
+  }
+  
+  int i, j;
+  int page;
+  float hits = 0.0;
+  list<int> cache;
+  bool found;
+
+  for(i = 0; i < 10000; i++){
+    found = false;
+    page = pages[i];
+
+    for(j = 0; j < cache_size; j++){
+      if(find(cache.begin(), cache.end(), page) != cache.end()){
+	hits++;
+	found = true;
+	cache.remove(page);
+	cache.push_front(page);
+	break;
+      }
+    }
+
+    if(!found){
+      if(cache.size() < cache_size){
+	cache.push_front(page);
+      } else {
+	cache.pop_back();
+	cache.push_front(page);
+      }
+    }
+
+  }
+
+  return (hits/10000) * 100;
+}
+
+float clock(int cache_size, int * pages){
+  if(cache_size == 0){
+    return 0;
+  }
+
+  int i, j, k;
+  int page;
+  float hits = 0.0;
+  int* cache = new int[10000];
+  int* bits = new int[cache_size];
+  bool found;
+  int index = 0;
+
+  for(i = 0; i < cache_size; i++){
+    cache[i] = 0;
+  }
+  
+  for(i = 0; i < 10000; i++){
+    found = false;
+    page = pages[i];
+
+    for(j = 0; j < cache_size; j++){
+      if(cache[j] = page){
+	hits++;
+	found = true;
+	bits[j] = 1;
+	break;
+      }
+    }
+
+    if(!found){
+      while(bits[k] == 1){
+	if(k == cache_size){
+	  k = 0;
+	}
+	bits[k] = 0;
+	k++;
+      }
+      cache[k] = page;
+      bits[k] = 1;
+    }
+
+    if(k == cache_size){
+      k = 0;
+    }
+  }
+
+  return (hits/10000.0) * 100;
+}
+/*
+float optimal(int cache_size, int * pages){
+  if(cache_size == 0){
+    return 0;
+  }
+
+  int i, j;
+  int page;
+  float hits = 0.0;
+  int[] cache = new int[cache_size];
+  bool found;
+
+
+  for(i = 0; i < cache_size; i++){
+    cache[i] = 0;
+  }
+
+  for(i = 0; i < 10000; i++){
+    found = false;
+    page = pages[i];
+
+    for(j = 0; j < cache_size; j++){
+      if(page == cache[]){
+	hits++;
+	found = true;
+	break;
+      }
+    }
+
+    if(!found){
+      
+
+*/
