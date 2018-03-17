@@ -17,54 +17,58 @@ float optimal(int cache_size, int * pages);
 
 int main(int argc, char ** argv){
   if(argc != 7){
-    cout << "Usage: ./prog4swap [-m size-of-memory] [-r replacement-policy] [-w workload]" << ndl;
+    cout << "Usage: ./prog4swap [-m size-of-memory] [-r replacement-policy] [-w workload]" << endl;
     exit(1);
   }
 
   int cache_size = atoi(argv[2]);
   string replacement_policy = argv[4];
   string workload = argv[6];
+  float hit_rate;
   
   if(replacement_policy == "OPT" && workload  == "No-locality"){
-    optimal(cache_size, no_locality());
+    hit_rate = optimal(cache_size, no_locality());
   } else if(replacement_policy == "OPT" && workload  == "80-20"){
-    optimal(cache_size, eighty_twenty());
+    hit_rate = optimal(cache_size, eighty_twenty());
   } else if (replacement_policy == "OPT" && workload  == "Looping"){
-    optimal(cache_size, looping());
+    hit_rate = optimal(cache_size, looping());
   }
 
   if(replacement_policy == "LRU" && workload  == "No-locality"){
-    lru(cache_size, no_locality());
+    hit_rate = lru(cache_size, no_locality());
   } else if(replacement_policy == "LRU" && workload  == "80-20"){
-    lru(cache_size, eighty_twenty());
+    hit_rate = lru(cache_size, eighty_twenty());
   } else if (replacement_policy == "LRU" && workload  == "Looping"){
-    lru(cache_size, looping());
+    hit_rate = lru(cache_size, looping());
   }
 
   if(replacement_policy == "FIFO" && workload  == "No-locality"){
-    fifo(cache_size, no_locality());
+    hit_rate = fifo(cache_size, no_locality());
   } else if(replacement_policy == "FIFO" && workload  == "80-20"){
-    fifo(cache_size, eighty_twenty());
+    hit_rate = fifo(cache_size, eighty_twenty());
   } else if (replacement_policy == "FIFO" && workload  == "Looping"){
-    fifo(cache_size, looping());
+    hit_rate = fifo(cache_size, looping());
   }
 
   if(replacement_policy == "Rand" && workload  == "No-locality"){
-    random(cache_size, no_locality());
+    hit_rate = random(cache_size, no_locality());
   } else if(replacement_policy == "Rand" && workload  == "80-20"){
-    random(cache_size, eighty_twenty());
+    hit_rate = random(cache_size, eighty_twenty());
   } else if (replacement_policy == "Rand" && workload  == "Looping"){
-    random(cache_size, looping());
+    hit_rate = random(cache_size, looping());
   }
   
   if(replacement_policy == "Clock" && workload  == "No-locality"){
-    clock(cache_size, no_locality());
+    hit_rate = clock(cache_size, no_locality());
   } else if(replacement_policy == "Clock" && workload  == "80-20"){
-    clock(cache_size, eighty_twenty());
+    hit_rate = clock(cache_size, eighty_twenty());
   } else if (replacement_policy == "Clock" && workload  == "Looping"){
-    clock(cache_size, looping());
+    hit_rate = clock(cache_size, looping());
   }
   
+  char buff[20];
+  sprintf(buff, "%f", hit_rate);
+  printf("%s", buff);
   
   return 0;
 }
@@ -129,7 +133,6 @@ float fifo(int cache_size, int * pages){
 
   int * cache = new int[10000];
   int i, j;
-  int page;
   float hits = 0.0;
   bool found;
   int cache_index = 0;
@@ -139,11 +142,10 @@ float fifo(int cache_size, int * pages){
   }
 
   for(i = 0; i < 10000; i++){
-    page = pages[i];
     found = false;
 
     for(j = 0; j < cache_size; j++){
-      if(page == cache[j]){
+      if(pages[i] == cache[j]){
 	found = true;
 	hits++;
 	break;
@@ -151,7 +153,7 @@ float fifo(int cache_size, int * pages){
     }
 
     if(!found){
-      cache[cache_index] = page;
+      cache[cache_index] = pages[i];
       cache_index++;
     }
 
@@ -168,7 +170,6 @@ float random(int cache_size, int * pages){
   }
 
   int i, j;
-  int page;
   float hits = 0.0;
   int * cache = new int[cache_size];
   bool found;
@@ -179,22 +180,21 @@ float random(int cache_size, int * pages){
 
   for(i = 0; i < 10000; i++){
     found = false;
-    page = pages[i];
 
     for(j = 0; j < cache_size; j++){
-      if(page == cache[j]){
+      if(pages[i] == cache[j]){
 	found = true;
 	hits++;
 	break;
       }
 
       if(!found){
-	cache[rand()%cache_size] = page;
+	cache[rand()%cache_size] = pages[i];
       }
     }
-
-    return (hits/10000.0) * 100;
   }
+
+  return (hits/10000.0) * 100.0;
 }
 
 float lru(int cache_size, int * pages){
@@ -203,31 +203,29 @@ float lru(int cache_size, int * pages){
   }
   
   int i, j;
-  int page;
   float hits = 0.0;
   list<int> cache;
   bool found;
 
   for(i = 0; i < 10000; i++){
     found = false;
-    page = pages[i];
 
     for(j = 0; j < cache_size; j++){
-      if(find(cache.begin(), cache.end(), page) != cache.end()){
+      if(find(cache.begin(), cache.end(), pages[i]) != cache.end()){
 	hits++;
 	found = true;
-	cache.remove(page);
-	cache.push_front(page);
+	cache.remove(pages[i]);
+	cache.push_front(pages[i]);
 	break;
       }
     }
 
     if(!found){
       if(cache.size() < cache_size){
-	cache.push_front(page);
+	cache.push_front(pages[i]);
       } else {
 	cache.pop_back();
-	cache.push_front(page);
+	cache.push_front(pages[i]);
       }
     }
 
@@ -241,24 +239,23 @@ float clock(int cache_size, int * pages){
     return 0;
   }
 
-  int i, j, k;
-  int page;
+  int i, j, k = 0;
   float hits = 0.0;
-  int* cache = new int[10000];
+  int* cache = new int[cache_size];
   int* bits = new int[cache_size];
   bool found;
   int index = 0;
 
   for(i = 0; i < cache_size; i++){
     cache[i] = 0;
+    bits[i] = 0;
   }
   
   for(i = 0; i < 10000; i++){
     found = false;
-    page = pages[i];
 
     for(j = 0; j < cache_size; j++){
-      if(cache[j] = page){
+      if(cache[j] = pages[i]){
 	hits++;
 	found = true;
 	bits[j] = 1;
@@ -268,18 +265,16 @@ float clock(int cache_size, int * pages){
 
     if(!found){
       while(bits[k] == 1){
+	bits[k] = 0;
+	k++;
+
 	if(k == cache_size){
 	  k = 0;
 	}
-	bits[k] = 0;
-	k++;
       }
-      cache[k] = page;
+      
+      cache[k] = pages[i];
       bits[k] = 1;
-    }
-
-    if(k == cache_size){
-      k = 0;
     }
   }
 
@@ -292,7 +287,6 @@ float optimal(int cache_size, int * pages){
   }
 
   int i, j;
-  int page;
   float hits = 0.0;
   int* cache = new int[cache_size];
   bool found;
@@ -305,10 +299,9 @@ float optimal(int cache_size, int * pages){
 
   for(i = 0; i < 10000; i++){
     found = false;
-    page = pages[i];
 
     for(j = 0; j < cache_size; j++){
-      if(page == cache[j]){
+      if(pages[i] == cache[j]){
 	hits++;
 	found = true;
 	break;
@@ -317,7 +310,7 @@ float optimal(int cache_size, int * pages){
 
     if(!found){
       if(before_full < cache_size){ // Before the cache is full we can just add pages to it 
-	cache[before_full] = page;
+	cache[before_full] = pages[i];
 	before_full++;
       } else {
 	list.clear();
@@ -336,7 +329,7 @@ float optimal(int cache_size, int * pages){
 
 	for(j = 0; j < cache_size; j++){
 	  if(cache[j] == list.front()){
-	    cache[j] = page;  // Find that final page in the cache and "evict" it
+	    cache[j] = pages[i];  // Find that final page in the cache and "evict" it
 	    break;
 	  }
 	}
